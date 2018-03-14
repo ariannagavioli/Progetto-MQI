@@ -15,4 +15,4 @@ def creaDS():
     return result
 
 a = creaDS()
-pd.a.to_csv("Voli2017.csv",sep = ';',decimal = ',')
+a.to_csv("Voli2017.csv",sep = ';',decimal = ',')
