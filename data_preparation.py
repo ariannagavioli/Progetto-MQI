@@ -2,7 +2,11 @@
 NY->CA DOVE SONO STATE ELIMINATE LE COLONNE DEL NOME DELLO
 STATO DI ARRIVO E PARTENZA, POICHÈ NOTE'''
 import pandas as pd
+from sklearn.utils import shuffle
 
+DATA_PATH = "./DataSet/"
+REPOSITORY = "/On_Time_On_Time_Performance_"
+CSV_PATH = "/On_Time_On_Time_Performance_" 
 PATH1 = "/home/luca/Scrivania/PROGETTO/On_Time_On_Time_Performance_2015_1.csv"
 useless1 = ["Quarter","Year","Month","DayofMonth","DayOfWeek","UniqueCarrier","Carrier","TailNum","FlightNum","OriginAirportSeqID","OriginCityMarketID","OriginCityName","OriginStateFips","OriginStateName","OriginWac","DestAirportSeqID",
 "DestCityMarketID","DestCityName","DestStateFips","DestStateName","DestWac","DepDelay","DepDel15","DepartureDelayGroups","DepTimeBlk","TaxiOut","WheelsOff","WheelsOn","TaxiIn",
@@ -18,21 +22,46 @@ useless2 = ["Origin","OriginState","Dest","DestState"]
 clean_e_save_ds toglie dal dataframe tutte le features contenute nel vettore vet, poi salva il nuovo 
 dataframe in un file .csv con nome name
 '''
-def clean_e_save_ds(dataframe, vet, name):
+def clean_ds(dataframe, vet=useless1):
     dataframe.fillna(0, inplace=True)
     for i in range(0,len(vet)):
          del dataframe[vet[i]]
-    dataframe.to_csv(name, sep = ';', decimal = ',')
- 
-#leggo il csv e lo salvo in un dataframe
-df = pd.read_csv(PATH1,dtype=object)
-clean_e_save_ds(df, useless1, "voli_oraperora.csv")
-#in ris ci sono solo i voli da NY a CA
-ris = df[(df['OriginState'] == 'NY') & (df['DestState'] == 'CA')]
-ris.to_csv("voli2015_unicatratta.csv",sep = ';',decimal = ',')
-clean_e_save_ds(ris, useless2, "unica_tratta_pulita.csv")
+    return 
+    
+def split_data(data_set):
+    shuffle_set = shuffle(data_set)
+    train_size = int(len(data_set)*0.8)
+    test_size = len(data_set) - train_size
+    train, test = shuffle_set[0:train_size,:], shuffle_set[test_size:len(data_set),:]
+    train = train.sort_values(['FlightDate','DepTime'],axis=0,ascending=[True, True],inplace = True)
+    test = test.sort_values(['FlightDate','DepTime'],axis=0,ascending=[True, True],inplace = True)
+    test.to_csv("test_set.csv",sep = ';',decimal = ',')
+    train.to_csv("train_set.csv",sep = ';',decimal = ',')
+    return
+    
+def create_ds(year):
+    csvs = {}
+    for month in range(1,12):
+        DATA_PATH_i = DATA_PATH + str(year) + REPOSITORY + str(year) + "_" + str(month)
+        print(DATA_PATH_i)
+        CSV_PATH_i = CSV_PATH + str(year) + "_" +  str(month)
+        print(CSV_PATH_i)
+        csvs[month-1] = pd.read_csv(DATA_PATH_i + CSV_PATH_i+".csv",dtype=object,delimiter=';')
+        clean_ds(csvs[month-1],useless1)
+    result = pd.concat(csvs)
+    return result
 
-ris["date_time"]=ris["FlightDate"].map(str)+ris["DepTime"].map(str)
-ris.pop("Unnamed: 109")
-ris.sort_values(['FlightDate','DepTime'],axis=0,ascending=[True, True],inplace = True)
-ris.to_csv("perfetto_plot.csv",sep = ';',decimal = ',')
+def unify_ds():
+    #leggo i csv, li pulisco e li salvo 
+    anni_puliti = {}
+    for year in range(0,4):
+        anni_puliti[year] = create_ds(year+2014)
+        #in ris ci sono solo i voli da NY a CA
+        anni_puliti[year] = anni_puliti[year][(anni_puliti[year]['OriginState'] == 'NY') & (anni_puliti[year]['DestState'] == 'CA')]
+        clean_ds(anni_puliti[year], useless2)
+        anni_puliti[year].to_csv("voli"+str(year)+"_unicatratta.csv",sep = ';',decimal = ',')
+        #creo test e train set
+        
+    tutti_anni = pd.concat(anni_puliti)
+    split_data(tutti_anni)
+    return
