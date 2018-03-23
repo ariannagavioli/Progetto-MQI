@@ -32,9 +32,9 @@ def split_data(data_set):
     shuffle_set = shuffle(data_set)
     train_size = int(len(data_set)*0.8)
     test_size = len(data_set) - train_size
-    train, test = shuffle_set[0:train_size,:], shuffle_set[test_size:len(data_set),:]
-    train = train.sort_values(['FlightDate','DepTime'],axis=0,ascending=[True, True],inplace = True)
-    test = test.sort_values(['FlightDate','DepTime'],axis=0,ascending=[True, True],inplace = True)
+    train, test = shuffle_set.iloc[0:train_size, :], shuffle_set.iloc[test_size:len(data_set), :]
+    train = train.sort_values(['FlightDate','DepTime'],axis=0,ascending=[True, True])
+    test = test.sort_values(['FlightDate','DepTime'],axis=0,ascending=[True, True])
     test.to_csv("test_set.csv",sep = ';',decimal = ',')
     train.to_csv("train_set.csv",sep = ';',decimal = ',')
     return
@@ -46,7 +46,7 @@ def create_ds(year):
         print(DATA_PATH_i)
         CSV_PATH_i = CSV_PATH + str(year) + "_" +  str(month)
         print(CSV_PATH_i)
-        csvs[month-1] = pd.read_csv(DATA_PATH_i + CSV_PATH_i+".csv",dtype=object,delimiter=';')
+        csvs[month-1] = pd.read_csv(DATA_PATH_i + CSV_PATH_i+".csv",dtype=object,delimiter=',')
         clean_ds(csvs[month-1],useless1)
     result = pd.concat(csvs)
     return result
