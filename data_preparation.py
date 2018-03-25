@@ -41,7 +41,7 @@ def split_data(data_set):
     
 def create_ds(year):
     csvs = {}
-    for month in range(1,12):
+    for month in range(1,13):
         DATA_PATH_i = DATA_PATH + str(year) + REPOSITORY + str(year) + "_" + str(month)
         print(DATA_PATH_i)
         CSV_PATH_i = CSV_PATH + str(year) + "_" +  str(month)
