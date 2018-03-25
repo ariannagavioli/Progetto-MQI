@@ -8,7 +8,7 @@ DATA_PATH = "./DataSet/"
 REPOSITORY = "/On_Time_On_Time_Performance_"
 CSV_PATH = "/On_Time_On_Time_Performance_" 
 PATH1 = "/home/luca/Scrivania/PROGETTO/On_Time_On_Time_Performance_2015_1.csv"
-useless1 = ["Quarter","Year","Month","DayofMonth","DayOfWeek","UniqueCarrier","Carrier","TailNum","FlightNum","OriginAirportSeqID","OriginCityMarketID","OriginCityName","OriginStateFips","OriginStateName","OriginWac","DestAirportSeqID",
+useless1 = ["Quarter","UniqueCarrier","Carrier","TailNum","FlightNum","OriginAirportSeqID","OriginCityMarketID","OriginCityName","OriginStateFips","OriginStateName","OriginWac","DestAirportSeqID",
 "DestCityMarketID","DestCityName","DestStateFips","DestStateName","DestWac","DepDelay","DepDel15","DepartureDelayGroups","DepTimeBlk","TaxiOut","WheelsOff","WheelsOn","TaxiIn",
 "ArrTime","ArrDelay","ArrDel15","ArrivalDelayGroups","ArrTimeBlk","CRSElapsedTime","ActualElapsedTime","AirTime","Flights","Distance","WeatherDelay","NASDelay","SecurityDelay","LateAircraftDelay","FirstDepTime",
 "TotalAddGTime","LongestAddGTime","DivAirportLandings","DivReachedDest","DivActualElapsedTime","DivArrDelay","DivDistance","Div1Airport","Div1AirportID","Div1AirportSeqID","Div1WheelsOn","Div1TotalGTime","Div1LongestGTime",
