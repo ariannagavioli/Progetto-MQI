@@ -31,8 +31,7 @@ def clean_ds(dataframe, vet=useless1):
 def split_data(data_set):
     shuffle_set = shuffle(data_set)
     train_size = int(len(data_set)*0.8)
-    test_size = len(data_set) - train_size
-    train, test = shuffle_set.iloc[0:train_size, :], shuffle_set.iloc[test_size:len(data_set), :]
+    train, test = shuffle_set.iloc[0:train_size, :], shuffle_set.iloc[train_size:len(data_set), :]
     train = train.sort_values(['FlightDate','DepTime'],axis=0,ascending=[True, True])
     test = test.sort_values(['FlightDate','DepTime'],axis=0,ascending=[True, True])
     test.to_csv("test_set.csv",sep = ';',decimal = ',')
