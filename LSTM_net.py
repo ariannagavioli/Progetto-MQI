@@ -7,20 +7,26 @@ from keras.layers import Dense
 from keras.layers import LSTM
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
-
+#macros
 MB_SIZE = 6793
 STEP_PER_EPOCH = 6
 LOOK_BACK = 70
-DENSE_BLOCKS = 1
-LSTM_BLOCKS = 4
+LSTM_NEURONS = 50
+DENSE_NEURONS = 100
 EPOCHS = 15
 PROVA = 1
 PATH_TRAIN = "./DataSet/train_subset.csv"
 PATH_TEST = "./DataSet/test_subset.csv"
-
+#Importo train e test
 train = pd.read_csv(PATH_TRAIN,delimiter=';')
 test = pd.read_csv(PATH_TEST,delimiter=';')
 
+#Elimino le ultime features inutili
+from data_preparation import clean_ds
+useless = ['FlightDate', 'Unnamed: 109', 'Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'CancellationCode']
+clean_ds(train, useless)
+clean_ds(test, useless)
+'''
 train.pop('FlightDate')
 train.pop('Unnamed: 109')
 train.pop('Unnamed: 0')
@@ -33,33 +39,25 @@ test.pop('Unnamed: 1')
 test.pop('Unnamed: 2')
 train.pop('CancellationCode')
 test.pop('CancellationCode')
-
+'''
+#il dataset viene castato a float
 train.astype(dtype = 'float64')
 test.astype(dtype = 'float64')
-
 #Normalizzo i valori nei set
 scaler = MinMaxScaler(feature_range=(0,1))
 train = scaler.fit_transform(train)
 test = scaler.fit_transform(test)
 
-'''def delay_finder(dataset):
-    print (dataset.columns)
-    for i in range (dataset.shape[1]):
-        print(dataset.iloc[0,i])
-        print('\n')
-        if(dataset[0,i]=='ArrDelayMinutes'): return i
-    return -1'''
-    
-
 #Creo un nuovo dataset con timestamp consecutivi su una stessa riga
 #Di fatto avrò i voli precedenti al volo i in voliPrecedenti[i], il ritardo da
 #predire del volo i in ritardiEffettivi[i]
+    
 def create_dataset(dataset, look_back=LOOK_BACK):
     #nColonne = dataset.shape[1]
     #index_delay = delay_finder(dataset)
     #print (index_delay)
     #print (dataset.columns)
-    print ("\n\n\n\n\n")
+    #print ("\n\n\n\n\n")
     voliPrecedenti, ritardiEffettivi = [],[]
     print (dataset.shape[0])
     print ("\n\n\n\n\n")
@@ -79,7 +77,6 @@ def generator(batch_size):
         targets = ritardiEffettivi[counter:counter+batch_size]
         counter += 1
         yield (inputs,targets)
-
 
 voliPrecedenti, ritardiEffettivi = create_dataset(train)
 testVoliPrecedenti, testRitardiEffettivi = create_dataset(test)
@@ -103,8 +100,9 @@ testVoliPrecedenti = numpy.reshape(testVoliPrecedenti, (testVoliPrecedenti.shape
 #Creo la rete e la alleno
 model = Sequential()
 #????? Proviamo a scambiare
-model.add(LSTM(LSTM_BLOCKS, input_shape = (LOOK_BACK,voliPrecedenti.shape[2]),kernel_initializer='random_uniform',bias_initializer='zeros'))
-model.add(Dense(DENSE_BLOCKS,kernel_initializer='random_uniform',bias_initializer='zeros'))
+#COME PRIMO PARAMETRO I LAYER VOGLIONO IL NUMERO DI NEURONI
+model.add(LSTM(LSTM_NEURONS, input_shape = (LOOK_BACK,voliPrecedenti.shape[2]),kernel_initializer='random_uniform',bias_initializer='zeros'))
+model.add(Dense(DENSE_NEURONS,kernel_initializer='random_uniform',bias_initializer='zeros'))
 #SGD = Stochastic Gradient Descent
 model.compile(optimizer = 'SGD', loss = 'mean_squared_error')
 minibatch_size = MB_SIZE
