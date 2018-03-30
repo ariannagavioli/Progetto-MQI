@@ -12,7 +12,7 @@ MB_SIZE = 6793
 STEP_PER_EPOCH = 6
 LOOK_BACK = 70
 LSTM_NEURONS = 50
-DENSE_NEURONS = 100
+DENSE_NEURONS = 1
 EPOCHS = 15
 PROVA = 1
 PATH_TRAIN = "./DataSet/train_subset.csv"
@@ -43,31 +43,21 @@ test.pop('CancellationCode')
 #il dataset viene castato a float
 train.astype(dtype = 'float64')
 test.astype(dtype = 'float64')
-#Normalizzo i valori nei set
-scaler = MinMaxScaler(feature_range=(0,1))
-train = scaler.fit_transform(train)
-test = scaler.fit_transform(test)
 
 #Creo un nuovo dataset con timestamp consecutivi su una stessa riga
 #Di fatto avrò i voli precedenti al volo i in voliPrecedenti[i], il ritardo da
 #predire del volo i in ritardiEffettivi[i]
     
 def create_dataset(dataset, look_back=LOOK_BACK):
-    #nColonne = dataset.shape[1]
-    #index_delay = delay_finder(dataset)
-    #print (index_delay)
-    #print (dataset.columns)
-    #print ("\n\n\n\n\n")
-    voliPrecedenti, ritardiEffettivi = [],[]
-    print (dataset.shape[0])
-    print ("\n\n\n\n\n")
-    print (dataset.shape[1])
-    print ("\n\n\n\n\n")
+    #Inizializzo voliPrecedenti a zero con dimensioni (numero voli da predire, time step precedenti, numero di feature)
+    #Inizializzo ritardiEffettivi a zero con dimensioni (numero voli da predire, 1)
+    voliPrecedenti = numpy.zeros((dataset.shape[0]-look_back,look_back,dataset.shape[1]),dtype=numpy.float)
+    ritardiEffettivi = numpy.zeros((dataset.shape[0]-look_back,1),dtype=numpy.float)
     for i in range(dataset.shape[0]-look_back):
-        x = dataset[i:(i+look_back),:]
-        voliPrecedenti.append(x)
-        ritardiEffettivi.append(dataset[i+look_back,15])
-    return numpy.array(voliPrecedenti), numpy.array(ritardiEffettivi)
+        x = dataset[i:(i+look_back)]
+        voliPrecedenti[i] = x
+        ritardiEffettivi[i] = dataset.iloc[i+look_back,15]
+    return voliPrecedenti,ritardiEffettivi
 
 #Definisco una funzione generatore di batch per il fit del modello:
 def generator(batch_size):
@@ -81,19 +71,20 @@ def generator(batch_size):
 voliPrecedenti, ritardiEffettivi = create_dataset(train)
 testVoliPrecedenti, testRitardiEffettivi = create_dataset(test)
 
+#Normalizzo i valori nei set
+scaler1 = MinMaxScaler(feature_range=(0,1))
+scaler2 = MinMaxScaler(feature_range=(0,1))
+for i in range (voliPrecedenti.shape[0]):
+    voliPrecedenti[i] = scaler1.fit_transform(voliPrecedenti[i])
+for i in range (testVoliPrecedenti.shape[0]):
+    testVoliPrecedenti[i] = scaler1.fit_transform(testVoliPrecedenti[i])
+ritardiEffettivi = scaler2.fit_transform(ritardiEffettivi)
+testRitardiEffettivi = scaler2.fit_transform(testRitardiEffettivi)
+
 #Trasformo i dati nella forma [campioni,time step, feature]
 #voliPrecedenti.shape[0] => numero righe = numeor di campioni
 #voliPrecedenti.shape[1] => numero colonne = numero di feature
 #time step = 1 perché facciamo scorrere la finestra temporale con un passo = 1
-print("voliPrecedenti.shape[2]:")
-print(voliPrecedenti.shape[2])
-print("\n\n\n\n\n")
-print("voliPrecedenti.shape[1]:")
-print(voliPrecedenti.shape[1])
-print("\n\n\n\n\n")
-print("voliPrecedenti.shape[0]:")
-print(voliPrecedenti.shape[0])
-print("\n\n\n\n\n")
 voliPrecedenti = numpy.reshape(voliPrecedenti, (voliPrecedenti.shape[0],LOOK_BACK,voliPrecedenti.shape[2]))
 testVoliPrecedenti = numpy.reshape(testVoliPrecedenti, (testVoliPrecedenti.shape[0],LOOK_BACK,testVoliPrecedenti.shape[2]))
 
@@ -112,14 +103,18 @@ model.fit_generator(generator(minibatch_size), steps_per_epoch = STEP_PER_EPOCH,
                     use_multiprocessing = True)
 model.save("LSTM_prova"+str(PROVA)+".h5")
 
+#QUESTO L'HA SCRITTO LEO questa cosa non funziona, potresti provare a seguire
+#il flusso delle operazioni riportate qui: https://datascience.stackexchange.com/questions/16548/minmaxscaler-broadcast-shapes/16741#16741
+#il top sarebbe fit_trasformare i dati prima di fare il fit quindi prova a riscrivere la create
+
 #Prediciamo i ritardi
 ritardiPredetti = model.predict(voliPrecedenti,verbose=1)
 testPredict = model.predict(testVoliPrecedenti,verbose=1)
 #Riportiamo i dati normalizzati tra (0,1) nelle unità originali
-#ritardiPredetti = scaler.inverse_transform(ritardiPredetti)
-#ritardiEffettivi = scaler.inverse_transform([ritardiEffettivi])
-#testPredict = scaler.inverse_transform(testPredict)
-#testRitardiEffettivi = scaler.inverse_transform([testRitardiEffettivi])
+ritardiPredetti = scaler2.inverse_transform(ritardiPredetti)
+ritardiEffettivi = scaler2.inverse_transform(ritardiEffettivi)
+testPredict = scaler2.inverse_transform(testPredict)
+testRitardiEffettivi = scaler2.inverse_transform(testRitardiEffettivi)
 #Calcolo l'errore con lo scarto quadratico medio
 trainError = math.sqrt(mean_squared_error(ritardiEffettivi,ritardiPredetti)) 
 print("Errore di train: %.2f RMSE" % (trainError))
