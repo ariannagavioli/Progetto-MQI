@@ -1,5 +1,5 @@
 import numpy
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 import pandas as pd
 import math
 from keras.models import Sequential
@@ -56,7 +56,7 @@ def create_dataset(dataset, look_back=LOOK_BACK):
     for i in range(dataset.shape[0]-look_back):
         x = dataset[i:(i+look_back)]
         voliPrecedenti[i] = x
-        ritardiEffettivi[i] = dataset.iloc[i+look_back,15]
+        ritardiEffettivi[i] = dataset.iloc[i+look_back,12]
     return voliPrecedenti,ritardiEffettivi
 
 #Definisco una funzione generatore di batch per il fit del modello:
@@ -98,14 +98,22 @@ model.add(Dense(DENSE_NEURONS,kernel_initializer='random_uniform',bias_initializ
 model.compile(optimizer = 'SGD', loss = 'mean_squared_error')
 minibatch_size = MB_SIZE
 #Batch size -> ogni quanto aggiorniamo il gradient descent, batch size di default 32
-#EVENTUALMENTE METTERE VALIDATION SET
-model.fit_generator(generator(minibatch_size), steps_per_epoch = STEP_PER_EPOCH, epochs = EPOCHS, verbose=1,
-                    use_multiprocessing = True)
+#model.fit_generator(generator(minibatch_size), steps_per_epoch = STEP_PER_EPOCH, epochs = EPOCHS, verbose=1,
+#                    use_multiprocessing = True)
+history = model.fit(voliPrecedenti, ritardiEffettivi, epochs = EPOCHS, verbose = 1, validation_split = 0.2)
 model.save("LSTM_prova"+str(PROVA)+".h5")
 
 #QUESTO L'HA SCRITTO LEO questa cosa non funziona, potresti provare a seguire
 #il flusso delle operazioni riportate qui: https://datascience.stackexchange.com/questions/16548/minmaxscaler-broadcast-shapes/16741#16741
 #il top sarebbe fit_trasformare i dati prima di fare il fit quindi prova a riscrivere la create
+
+#Plot allenamento
+#grafico l'andamento di loss e val_loss allo scorrere delle epoche
+plt.plot(history.history['loss'], label='train')
+plt.plot(history.history['val_loss'],label='test')
+plt.legend()
+#plt.savefig("plot1.png")
+plt.show()
 
 #Prediciamo i ritardi
 ritardiPredetti = model.predict(voliPrecedenti,verbose=1)
@@ -115,6 +123,18 @@ ritardiPredetti = scaler2.inverse_transform(ritardiPredetti)
 ritardiEffettivi = scaler2.inverse_transform(ritardiEffettivi)
 testPredict = scaler2.inverse_transform(testPredict)
 testRitardiEffettivi = scaler2.inverse_transform(testRitardiEffettivi)
+
+#Plot predizione finale
+plt.plot(testPredict, label='predict')
+plt.legend()
+#plt.savefig("plot2.png")
+plt.show()
+#Plot ritardi effettivi
+plt.plot(testRitardiEffettivi, label='true')
+plt.legend()
+#plt.savefig("plot3.png")
+plt.show()
+
 #Calcolo l'errore con lo scarto quadratico medio
 trainError = math.sqrt(mean_squared_error(ritardiEffettivi,ritardiPredetti)) 
 print("Errore di train: %.2f RMSE" % (trainError))
