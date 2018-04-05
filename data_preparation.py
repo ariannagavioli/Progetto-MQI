@@ -64,3 +64,9 @@ def unify_ds():
     tutti_anni = pd.concat(anni_puliti)
     split_data(tutti_anni)
     return
+
+def obtain_index(data_frame, index_name):
+    name_list = list(data_frame.columns.values)
+    for i in range(len(name_list)):
+        if(name_list[i]=="DepDelayMinutes"):
+            return i 
