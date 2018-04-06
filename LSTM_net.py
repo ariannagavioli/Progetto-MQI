@@ -107,8 +107,8 @@ testRitardiEffettivi = scaler2.fit_transform(testRitardiEffettivi)
 
 #Trasformo i dati nella forma [campioni,time step, feature]
 #voliPrecedenti.shape[0] => numero righe = numeor di campioni
-#voliPrecedenti.shape[1] => numero colonne = numero di feature
-#time step = 1 perché facciamo scorrere la finestra temporale con un passo = 1
+#voliPrecedenti.shape[2] => numero colonne = numero di feature
+#time step = LOOK_BACK perché facciamo scorrere la finestra temporale con un passo = LOOK_BACK
 voliPrecedenti = numpy.reshape(voliPrecedenti, (voliPrecedenti.shape[0],LOOK_BACK,voliPrecedenti.shape[2]))
 testVoliPrecedenti = numpy.reshape(testVoliPrecedenti, (testVoliPrecedenti.shape[0],LOOK_BACK,testVoliPrecedenti.shape[2]))
 

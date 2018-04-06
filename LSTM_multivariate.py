@@ -9,12 +9,11 @@ from keras.layers import Dense, LSTM
 import data_preparation as dp
 
 N_FEATURES=22
-MB_SIZE = 6793
-STEP_PER_EPOCH = 6
 LOOK_BACK = 70
 LSTM_NEURONS = 50
 DENSE_NEURONS = 1
 EPOCHS = 15
+PROVA=1
  
 # creo un nuovo dataset come input per la rete
 def create_dataset(data, n_in=1):
@@ -25,7 +24,7 @@ def create_dataset(data, n_in=1):
 	for i in range(n_in, 0, -1):
 		cols.append(df.shift(i))
 		names += [('var%d(t-%d)' % (j+1, i)) for j in range(n_vars)]
-	# forecast sequence (t, t+1, ... t+n)
+	# forecast time t
 	cols.append(df.shift(-i))
 	names += [('var%d(t)' % (j+1)) for j in range(n_vars)]
 	# put it all together
@@ -54,24 +53,29 @@ values = values.astype('float64')
 scaler = MinMaxScaler(feature_range=(-1, 1))
 scaled = scaler.fit_transform(values)
 # frame as supervised learning
-reframed = create_dataset(scaled, LOOK_BACK, 1)
+reframed = create_dataset(scaled, LOOK_BACK)
 print(reframed.shape)
-
-
 
 #--------------------------------------------------------------------------------------------------------------------------------------
 
-
+to_predict= dp.obtain_index(dataset, "ArrDelayMinutes")
+print("indice target=")
+print (to_predict)
 # drop columns we don't want to predict - quelle che aggiunge alla creazione del dataset
-reframed.drop(reframed.columns[[9,10,11,12,13,14,15]], axis=1, inplace=True)
+for i in range (N_FEATURES):
+    if i!=to_predict: reframed.drop(reframed.columns[(LOOK_BACK*N_FEATURES)+i], axis=1, inplace=True)
 print(reframed.head())
 
-
+#------------------------------------------------------------------------------------------
 # split into train and test sets
 values = reframed.values
+'''
+Divisione sequenziale:
+n_train_hours = 365 * 70 
+train = values[:n_train_hours, :]
+test = values[n_train_hours:, :]
+'''
 train, test = dp.split_data(values)
-
-
 
 # split into input and outputs
 train_X, train_y = train[:, :-1], train[:, -1]
@@ -79,22 +83,23 @@ test_X, test_y = test[:, :-1], test[:, -1]
 
 print(train_X.shape, len(train_X), train_y.shape)
 
-
 # reshape input to be 3D [samples, timesteps, features]
-train_X = train_X.reshape((train_X.shape[0], LOOK_BACK, train_X.shape[1]))     #train_X.shape[1] oppure 1 oppure n° features ????
-test_X = test_X.reshape((test_X.shape[0], LOOK_BACK, test_X.shape[1]))         #train_X.shape[1] oppure 1 oppure n° features ????
+train_X = train_X.reshape((train_X.shape[0], LOOK_BACK, N_FEATURES))     #train_X.shape[1] e n° features non sono uguali????
+test_X = test_X.reshape((test_X.shape[0], LOOK_BACK, N_FEATURES))         #train_X.shape[1] e n° features non sono uguali????
 
 print(train_X.shape, train_y.shape, test_X.shape, test_y.shape)
-
-
  
 # design network
 model = Sequential()
-model.add(LSTM(50, input_shape=(train_X.shape[1], train_X.shape[2])))
-model.add(Dense(1))
-model.compile(loss='mae', optimizer='adam')
+model.add(LSTM(LSTM_NEURONS, input_shape=(train_X.shape[1], train_X.shape[2]), kernel_initializer='random_uniform',bias_initializer='zeros'))
+model.add(Dense(DENSE_NEURONS,kernel_initializer='random_uniform',bias_initializer='zeros'))))
+#SGD = Stochastic Gradient Descent
+model.compile(loss='mean_squared_error', optimizer='SDG')
 # fit network
-history = model.fit(train_X, train_y, epochs=50, batch_size=72, validation_data=(test_X, test_y), verbose=2, shuffle=False)
+#INIZIALMENTE batch_size=72, POI MESSO QUELLO DI DEFAULT (32)
+history = model.fit(train_X, train_y, epochs=EPOCHS, validation_data=(test_X, test_y), verbose=1, shuffle=False)
+#PER SALVARE
+model.save("LSTM_multivariate_prova"+str(PROVA)+".h5")
 # plot history
 plt.plot(history.history['loss'], label='train')
 plt.plot(history.history['val_loss'], label='test')
@@ -108,12 +113,12 @@ test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
 
 
 # invert scaling for forecast
-inv_yhat = concatenate((yhat, test_X[:, 1:]), axis=1)
+inv_yhat = concatenate((yhat, test_X[:, -(N_FEATURES-1):]), axis=1)
 inv_yhat = scaler.inverse_transform(inv_yhat)
 inv_yhat = inv_yhat[:,0]
 # invert scaling for actual
 test_y = test_y.reshape((len(test_y), 1))
-inv_y = concatenate((test_y, test_X[:, 1:]), axis=1)
+inv_y = concatenate((test_y, test_X[:, -(N_FEATURES-1):]), axis=1)
 inv_y = scaler.inverse_transform(inv_y)
 inv_y = inv_y[:,0]
 
