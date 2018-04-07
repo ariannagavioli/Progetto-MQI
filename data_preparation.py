@@ -28,11 +28,21 @@ def split_data(data_set):
     shuffle_set = shuffle(data_set)
     train_size = int(len(data_set)*0.8)
     train, test = shuffle_set.iloc[0:train_size, :], shuffle_set.iloc[train_size:len(data_set), :]
-    train = train.sort_values(['FlightDate','DepTime'],axis=0,ascending=[True, True])
-    test = test.sort_values(['FlightDate','DepTime'],axis=0,ascending=[True, True])
+    train = train.sort_values(['Year','Month','DayofMonth','DepTime'],axis=0,ascending=[True, True, True, True])
+    test = test.sort_values(['Year','Month','DayofMonth','DepTime'],axis=0,ascending=[True, True, True, True])
     test.to_csv("test_set.csv",sep = ';',decimal = ',')
     train.to_csv("train_set.csv",sep = ';',decimal = ',')
     return
+
+def split_data2(data_set):
+    shuffle_set = shuffle(data_set)
+    train_size = int(len(data_set)*0.8)
+    train, test = shuffle_set.iloc[0:train_size, :], shuffle_set.iloc[train_size:len(data_set), :]
+    train = train.sort_values(['Year(t)','Month(t)','DayofMonth(t)','DepTime(t)'],axis=0,ascending=[True, True, True, True])
+    test = test.sort_values(['Year(t)','Month(t)','DayofMonth(t)','DepTime(t)'],axis=0,ascending=[True, True, True, True])
+    test.to_csv("test_set_2.csv",sep = ';',decimal = ',')
+    train.to_csv("train_set_2.csv",sep = ';',decimal = ',')
+    return train, test
 
 # create_ds unisce tutti i mesi dell'anno
 def create_ds(year):
