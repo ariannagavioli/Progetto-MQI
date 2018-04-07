@@ -34,10 +34,10 @@ def create_dataset(data, col, n_in=1):
 
 
 # load dataset
-dataset = pd.read_csv("./DataSet/voli_2014_2.csv", header=0, delimiter=';')
-dataset = dataset.iloc[:10000, :]
+dataset = pd.read_csv("./DataSet/voli_unicatratta_2.csv", header=0, delimiter=';')
+#dataset = dataset.iloc[:80000, :]
 #Elimino le ultime features inutili
-useless = ['Unnamed: 109', 'Unnamed: 0', 'Unnamed: 1', 'FlightDate']
+useless = ['Unnamed: 109', 'Unnamed: 0', 'Unnamed: 1', 'Unnamed: 2', 'FlightDate']
 dp.clean_ds(dataset, useless)
 
 # integer encode direction
@@ -66,7 +66,7 @@ train = values[:n_train_hours, :]
 test = values[n_train_hours:, :]
 '''
 
-train, test = dp.split_data2(reframed.iloc[70:])
+train, test = dp.split_data2(reframed.iloc[LOOK_BACK:])
 
 to_predict= dp.obtain_index(dataset, "ArrDelayMinutes")
 print("indice target=")
@@ -110,28 +110,29 @@ model.add(Dense(DENSE_NEURONS,kernel_initializer='random_uniform',bias_initializ
 model.compile(loss='mean_squared_error', optimizer='SGD', metrics=['accuracy'])
 # fit network
 #INIZIALMENTE batch_size=72, POI MESSO QUELLO DI DEFAULT (32)
-history = model.fit(train_X, train_y, epochs=EPOCHS, validation_data=(test_X, test_y), verbose=1, shuffle=False)
+history = model.fit(train_X, train_y, epochs=EPOCHS, validation_split = 0.2, verbose=1, shuffle=False)
 #PER SALVARE
 model.save("LSTM_multivariate_prova"+str(PROVA)+".h5")
 # plot history
 plt.plot(history.history['loss'], label='train')
 plt.plot(history.history['val_loss'], label='test')
 plt.legend()
+plt.savefig('plot_validation_tot.jpg')
 plt.show()
 
 
 # make a prediction
 yhat = model.predict(test_X)
-test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
-
+test_X = test_X.reshape((test_X.shape[0], LOOK_BACK*N_FEATURES))
 
 # invert scaling for forecast
-inv_yhat = np.concatenate((yhat, test_X[:, -(N_FEATURES-1):]), axis=1)
+inv_yhat = np.concatenate((yhat, test_X[:, 1:scaled.shape[1]]), axis=1)
 inv_yhat = scaler.inverse_transform(inv_yhat)
 inv_yhat = inv_yhat[:,0]
+
 # invert scaling for actual
 test_y = test_y.reshape((len(test_y), 1))
-inv_y = np.concatenate((test_y, test_X[:, -(N_FEATURES-1):]), axis=1)
+inv_y = np.concatenate((test_y, test_X[:, 1:scaled.shape[1]]), axis=1)
 inv_y = scaler.inverse_transform(inv_y)
 inv_y = inv_y[:,0]
 
