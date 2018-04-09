@@ -11,8 +11,8 @@ import data_preparation as dp
 LOOK_BACK = 70
 LSTM_NEURONS = 64
 DENSE_NEURONS = 1
-EPOCHS = 25
-PROVA = 24
+EPOCHS = 1
+PROVA = 25
 BATCH_SIZE = 32
  
 #creiamo un nuovo dataset come input per la rete
@@ -57,7 +57,7 @@ reframed = create_dataset(scaled, dataset.columns, LOOK_BACK)
 
 #eliminiamo al tempo t tutte le feature che non ci interessano, lasciando unicamente l'ArrDelayMinutes
 to_predict= dp.obtain_index(dataset, "ArrDelayMinutes")
-n_features = reframed.shape[1]/(LOOK_BACK+1)
+n_features = int(reframed.shape[1]/(LOOK_BACK+1))
 for i in range (0, n_features):
     if (i<to_predict): reframed.drop(reframed.columns[(LOOK_BACK*n_features)], axis=1, inplace=True)
     if (i>to_predict): reframed.drop(reframed.columns[(LOOK_BACK*n_features)+1], axis=1, inplace=True)
