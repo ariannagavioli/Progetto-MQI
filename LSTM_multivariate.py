@@ -11,9 +11,9 @@ import data_preparation as dp
 LOOK_BACK = 70
 LSTM_NEURONS = 64
 DENSE_NEURONS = 1
-EPOCHS = 1
-PROVA = 25
-BATCH_SIZE = 32
+EPOCHS = 20
+PROVA = 24
+BATCH_SIZE = 128
  
 #creiamo un nuovo dataset come input per la rete
 def create_dataset(data, col, n_in=1):
@@ -75,8 +75,8 @@ test_X, test_y = test[:, :-1], test[:, -1]
 
 #modifichiamo l'input della rete in modo che sia tridimensionale,
 #nella forma [samples, timesteps, features]
-train_X = train_X.reshape((train_X.shape[0], LOOK_BACK, n_features))     #train_X.shape[1] e n° features non sono uguali????
-test_X = test_X.reshape((test_X.shape[0], LOOK_BACK, n_features))         #train_X.shape[1] e n° features non sono uguali????
+train_X = train_X.reshape((train_X.shape[0], LOOK_BACK, n_features))
+test_X = test_X.reshape((test_X.shape[0], LOOK_BACK, n_features))
 
 #costruiamo la rete
 model = Sequential()
