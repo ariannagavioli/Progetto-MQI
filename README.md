@@ -6,5 +6,4 @@ Bisogna considerare che alcune delle motivazioni di cancellazioni/ritardi dei vo
 Quello che proponiamo è uno studio dei dati delle compagnie aeree atto a costruire un modello che ci permetta di predire il ritardo di un volo in base a determinate caratteristiche del volo stesso.
 
 Al seguente link la presentazione del progetto: 
-
 [Presentazione progetto]( https://github.com/ariannagavioli/Progetto-MQI/blob/master/relazione.pdf  "Presentazione PDF")
